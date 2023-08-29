@@ -36,12 +36,13 @@ const formSchema = z.object({
 	}),
 })
 
-export const CreateServerModal = () => {
+export const EditServerModal = () => {
 	const modal = useModal()
 	const router = useRouter()
 
-	const isModalOpen = modal.isOpen && modal.type === "createServer"
+	const isModalOpen = modal.isOpen && modal.type === "editServer"
 
+	const { server } = modal.data
 	const form = useForm({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -50,14 +51,21 @@ export const CreateServerModal = () => {
 		},
 	})
 
+	React.useEffect(() => {
+		if (server) {
+			form.setValue("name", server.name)
+			form.setValue("imageUrl", server.imageUrl)
+		}
+	}, [server, form])
+
 	const isLoading = form.formState.isSubmitting
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		console.log(values)
 		try {
-			await axios.post("/api/servers", values)
-			form.reset()
-			modal.onClose()
+			await axios.patch(`/api/servers/${server?.id}`, values)
+			handleClose()
+			router.refresh()
 		} catch (e) {
 			console.error(e)
 		}
@@ -127,7 +135,7 @@ export const CreateServerModal = () => {
 						</div>
 						<DialogFooter className="bg-gray-100 px-6 py-4">
 							<Button disabled={isLoading} variant="primary" type="submit">
-								Create
+								Save
 							</Button>
 						</DialogFooter>
 					</form>
